@@ -27,7 +27,6 @@ services:
       SPRING_DATASOURCE_USERNAME: wedding_user
       SPRING_DATASOURCE_PASSWORD: secret
     networks:
-      - backend
       - traefik-net
     deploy:
       replicas: 1
