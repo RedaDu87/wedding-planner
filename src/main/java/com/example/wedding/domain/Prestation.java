@@ -9,11 +9,16 @@ import java.math.BigDecimal;
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor @Builder
 public class Prestation {
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(nullable = false)
     private String titre;
+
+    @Column(length = 2000)
+    private String description;
 
     @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal prix;
