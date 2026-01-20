@@ -35,17 +35,13 @@ services:
         condition: any
       labels:
         - "traefik.enable=true"
-        - "traefik.docker.network=traefik-net"
         - "traefik.http.routers.wedding.rule=Host(`wedding.hamsterdeal.ch`)"
         - "traefik.http.routers.wedding.entrypoints=websecure"
-        - "traefik.http.routers.wedding.tls=true"
         - "traefik.http.services.wedding.loadbalancer.server.port=8080"
 
 volumes:
   postgres_data:
 
 networks:
-  backend:
-    driver: overlay
   traefik-net:
     external: true
