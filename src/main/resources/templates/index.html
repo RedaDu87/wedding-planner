@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Wedding Planner</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+
+    <style>
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            padding: 12px;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f4f6f8;
+        }
+
+        h2 { margin: 0 0 12px; }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+        }
+
+        .panel {
+            background: white;
+            border-radius: 14px;
+            padding: 12px;
+            box-shadow: 0 6px 18px rgba(0,0,0,.08);
+        }
+
+        .row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        input {
+            flex: 1;
+            padding: 10px;
+            border-radius: 10px;
+            border: 1px solid #ccc;
+            font-size: 16px;
+        }
+
+        .btn {
+            padding: 10px 12px;
+            border-radius: 10px;
+            border: 1px solid #ccc;
+            background: #fff;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .btn-primary {
+            background: #4f46e5;
+            border-color: #4f46e5;
+            color: white;
+        }
+
+        .small {
+            font-size: 13px;
+            color: #666;
+            margin-bottom: 8px;
+        }
+
+        .cards { display: grid; gap: 8px; }
+
+        .card {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            border-radius: 12px;
+            border: 1px solid #e5e7eb;
+            background: #fff;
+            cursor: grab;
+        }
+
+        .card:active { cursor: grabbing; }
+
+        .price { font-weight: 700; white-space: nowrap; }
+
+        .scenarios { display: grid; gap: 10px; }
+
+        .scenario {
+            border: 2px dashed #c7c7c7;
+            border-radius: 14px;
+            padding: 10px;
+            min-height: 140px;
+            background: #fafafa;
+        }
+
+        .scenario.dragover {
+            border-color: #4f46e5;
+            background: #eef2ff;
+        }
+
+        .scenario-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+            gap: 6px;
+        }
+
+        .items { display: grid; gap: 6px; }
+
+        .item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px;
+            border-radius: 10px;
+            border: 1px solid #eee;
+            background: white;
+        }
+
+        @media (min-width: 900px) {
+            body { padding: 20px; }
+            .grid { grid-template-columns: 360px 1fr; }
+            .scenarios { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+        }
+    </style>
+</head>
+
+<body>
+
+<h2>💍 Wedding Planner</h2>
+
+<div class="grid">
+
+    <!-- ================= PRESTATIONS ================= -->
+    <div class="panel">
+        <h3>Prestations</h3>
+
+        <div class="row">
+            <input id="pTitre" placeholder="Titre"/>
+            <input id="pPrix" placeholder="CHF" style="max-width:100px"/>
+            <button class="btn btn-primary" onclick="createPrestation()">+</button>
+        </div>
+
+        <div class="small">Glisser dans un scénario</div>
+
+        <div class="cards" id="prestations"></div>
+    </div>
+
+    <!-- ================= SCÉNARIOS ================= -->
+    <div class="panel">
+        <h3>Scénarios</h3>
+
+        <div class="row">
+            <input id="scenarioName" placeholder="Nom du scénario"/>
+            <button class="btn btn-primary" onclick="createScenario()">+</button>
+        </div>
+
+        <div class="scenarios" id="scenarios">
+            <div class="scenario"
+                 th:each="s : ${scenarios}"
+                 th:attr="data-scenario-id=${s.id}">
+                <div class="scenario-header">
+                    <strong th:text="${s.nom}" th:attr="data-scenario-name=${s.id}">Scenario</strong>
+                    <div>
+                        <span class="price" th:attr="data-total-for=${s.id}">0 CHF</span>
+                        <button class="btn" th:attr="onclick=|renameScenario(${s.id})|">✎</button>
+                        <button class="btn" th:attr="onclick=|deleteScenario(${s.id})|">🗑</button>
+                    </div>
+                </div>
+                <div class="items" th:attr="data-items-for=${s.id}"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    /* ================= UTILS ================= */
+    const escapeHtml = s => String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+    const parsePrice = v => { const n=Number(String(v).replace(',','.')); if(isNaN(n)) return 0; return n; };
+
+    /* ================= PRESTATIONS ================= */
+    async function loadPrestations(){
+        const r=await fetch('/api/admin/prestations');
+        const d=await r.json();
+        prestations.innerHTML='';
+        d.forEach(p=>{
+            const c=document.createElement('div');
+            c.className='card';
+            c.draggable=true;
+            c.dataset.prestationId=p.id;
+            c.innerHTML=`
+      <div>${escapeHtml(p.titre)}</div>
+      <div style="display:flex;gap:6px;align-items:center">
+        <div class="price">${p.prix.toFixed(2)} CHF</div>
+        <button class="btn" onclick="editPrestation(${p.id},'${escapeHtml(p.titre)}',${p.prix})">✎</button>
+        <button class="btn" onclick="deletePrestation(${p.id})">🗑</button>
+      </div>`;
+            c.addEventListener('dragstart',e=>e.dataTransfer.setData('text/plain',p.id));
+            prestations.appendChild(c);
+        });
+    }
+
+    async function createPrestation(){
+        if(!pTitre.value) return;
+        await fetch('/api/admin/prestations',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({titre:pTitre.value,prix:parsePrice(pPrix.value)})});
+        pTitre.value='';pPrix.value='';
+        loadPrestations();refreshAllScenarios();
+    }
+
+    async function editPrestation(id,t,p){
+        const nt=prompt('Titre',t); if(nt==null) return;
+        const np=prompt('Prix',p); if(np==null) return;
+        await fetch(`/api/admin/prestations/${id}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({titre:nt,prix:parsePrice(np)})});
+        loadPrestations();refreshAllScenarios();
+    }
+
+    async function deletePrestation(id){
+        await fetch(`/api/admin/prestations/${id}`,{method:'DELETE'});
+        loadPrestations();refreshAllScenarios();
+    }
+
+    /* ================= SCÉNARIOS ================= */
+    function wireDnD(el){
+        el.addEventListener('dragover',e=>{e.preventDefault();el.classList.add('dragover');});
+        el.addEventListener('dragleave',()=>el.classList.remove('dragover'));
+        el.addEventListener('drop',async e=>{
+            e.preventDefault();el.classList.remove('dragover');
+            await fetch(`/api/scenarios/${el.dataset.scenarioId}/items?prestationId=${e.dataTransfer.getData('text/plain')}`,{method:'POST'});
+            refreshScenario(el.dataset.scenarioId);
+        });
+    }
+
+    async function refreshScenario(id){
+        const r=await fetch(`/api/scenarios/${id}`);
+        const d=await r.json();
+        const items=document.querySelector(`[data-items-for="${id}"]`);
+        const total=document.querySelector(`[data-total-for="${id}"]`);
+        if(!items) return;
+        items.innerHTML='';
+        d.items.forEach(i=>items.innerHTML+=`<div class="item"><div>${escapeHtml(i.titre)}</div><div>${i.prix.toFixed(2)} CHF</div></div>`);
+        total.textContent=d.total.toFixed(2)+' CHF';
+    }
+
+    const refreshAllScenarios=()=>document.querySelectorAll('.scenario').forEach(s=>refreshScenario(s.dataset.scenarioId));
+
+    async function createScenario(){
+        if(!scenarioName.value) return;
+        await fetch('/api/scenarios',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({nom:scenarioName.value})});
+        location.reload();
+    }
+
+    async function renameScenario(id){
+        const el=document.querySelector(`[data-scenario-name="${id}"]`);
+        const n=prompt('Nom',el.textContent);
+        if(n==null) return;
+        await fetch(`/api/admin/scenarios/${id}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({nom:n})});
+        el.textContent=n;
+    }
+
+    async function deleteScenario(id){
+        await fetch(`/api/admin/scenarios/${id}`,{method:'DELETE'});
+        document.querySelector(`.scenario[data-scenario-id="${id}"]`)?.remove();
+    }
+
+    /* ================= BOOT ================= */
+    document.querySelectorAll('.scenario').forEach(wireDnD);
+    loadPrestations();
+    refreshAllScenarios();
+</script>
+
+</body>
+</html>
