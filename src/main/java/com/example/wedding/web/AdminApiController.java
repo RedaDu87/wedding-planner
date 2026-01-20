@@ -17,26 +17,63 @@ public class AdminApiController {
     private final WeddingService service;
 
     // ---- Prestations CRUD ----
-    public record PrestationReq(String titre, BigDecimal prix) {}
-    public record PrestationDto(Long id, String titre, BigDecimal prix) {}
+    public record PrestationReq(
+            String titre,
+            String description,
+            BigDecimal prix
+    ) {}
+
+    public record PrestationDto(
+            Long id,
+            String titre,
+            String description,
+            BigDecimal prix
+    ) {}
 
     @GetMapping("/prestations")
     public List<PrestationDto> prestations() {
         return service.prestations().stream()
-                .map(p -> new PrestationDto(p.getId(), p.getTitre(), p.getPrix()))
+                .map(p -> new PrestationDto(
+                        p.getId(),
+                        p.getTitre(),
+                        p.getDescription(),
+                        p.getPrix()
+                ))
                 .toList();
     }
 
     @PostMapping("/prestations")
     public PrestationDto createPrestation(@RequestBody PrestationReq req) {
-        Prestation p = service.createPrestation(req.titre(), req.prix());
-        return new PrestationDto(p.getId(), p.getTitre(), p.getPrix());
+        Prestation p = service.createPrestation(
+                req.titre(),
+                req.description(),
+                req.prix()
+        );
+        return new PrestationDto(
+                p.getId(),
+                p.getTitre(),
+                p.getDescription(),
+                p.getPrix()
+        );
     }
 
     @PutMapping("/prestations/{id}")
-    public PrestationDto updatePrestation(@PathVariable Long id, @RequestBody PrestationReq req) {
-        Prestation p = service.updatePrestation(id, req.titre(), req.prix());
-        return new PrestationDto(p.getId(), p.getTitre(), p.getPrix());
+    public PrestationDto updatePrestation(
+            @PathVariable Long id,
+            @RequestBody PrestationReq req
+    ) {
+        Prestation p = service.updatePrestation(
+                id,
+                req.titre(),
+                req.description(),
+                req.prix()
+        );
+        return new PrestationDto(
+                p.getId(),
+                p.getTitre(),
+                p.getDescription(),
+                p.getPrix()
+        );
     }
 
     @DeleteMapping("/prestations/{id}")
@@ -44,7 +81,7 @@ public class AdminApiController {
         service.deletePrestation(id);
     }
 
-    // ---- Scénarios : delete + rename (bonus) ----
+    // ---- Scénarios ----
     public record ScenarioReq(String nom) {}
     public record ScenarioDto(Long id, String nom) {}
 

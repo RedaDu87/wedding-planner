@@ -16,6 +16,7 @@
             --muted:#64748b;
             --border:#e5e7eb;
             --danger:#dc2626;
+            --overlay:rgba(15,23,42,.55);
             --radius:18px;
         }
         *{box-sizing:border-box}
@@ -26,19 +27,10 @@
             background:var(--bg);
             color:var(--text);
         }
-        h1{
-            margin:0 0 20px;
-            font-size:1.7rem;
-            font-weight:700;
-            display:flex;
-            gap:10px;
-        }
+        h1{margin:0 0 20px;font-size:1.7rem;font-weight:700}
         h3{margin:0 0 14px;font-size:1.1rem;font-weight:600}
-        .grid{
-            display:grid;
-            grid-template-columns:1fr;
-            gap:18px;
-        }
+
+        .grid{display:grid;grid-template-columns:1fr;gap:18px}
         .panel{
             background:var(--card);
             border-radius:var(--radius);
@@ -46,8 +38,8 @@
             box-shadow:0 20px 40px rgba(0,0,0,.08);
         }
 
-        /* FORMS */
-        .form{display:grid;gap:10px;margin-bottom:16px}
+        /* Inputs */
+        .stack{display:grid;gap:10px;margin-bottom:16px}
         input,textarea{
             width:100%;
             padding:12px 14px;
@@ -55,20 +47,29 @@
             border:1px solid var(--border);
             font-size:15px;
         }
-        textarea{min-height:70px}
+        textarea{min-height:90px;resize:vertical}
+
         button{
             border:none;
             border-radius:14px;
             padding:12px 16px;
             font-weight:600;
             cursor:pointer;
+            transition:.15s;
         }
         .btn-primary{background:var(--primary);color:#fff}
         .btn-primary:hover{background:#4338ca}
-        .btn-icon{background:transparent;font-size:16px;padding:6px}
+        .btn-icon{
+            background:transparent;
+            padding:6px 8px;
+            border-radius:12px;
+            font-size:16px;
+        }
+        .btn-icon:hover{background:#f1f5f9}
         .btn-danger{color:var(--danger)}
+        .price{font-weight:800;color:var(--accent);white-space:nowrap}
 
-        /* PRESTATIONS */
+        /* Prestations */
         .cards{display:grid;gap:14px}
         .card{
             background:#fff;
@@ -79,28 +80,35 @@
             justify-content:space-between;
             gap:14px;
             cursor:grab;
+            user-select:none;
+            transition:.15s;
         }
-        .card:hover{box-shadow:0 14px 30px rgba(0,0,0,.12)}
-        .card-left{flex:1}
-        .card-title{font-weight:700;margin-bottom:4px}
-        .card-desc{font-size:13px;color:var(--muted)}
-        .price{font-weight:700;color:var(--accent)}
+        .card:hover{box-shadow:0 14px 30px rgba(0,0,0,.12); transform:translateY(-1px)}
+        .card-left{flex:1; min-width:0}
+        .card-title{font-weight:800;margin-bottom:4px}
+        .card-desc{
+            font-size:13px;color:var(--muted);
+            display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;
+            overflow:hidden;
+            cursor:pointer;
+        }
+        .card-desc:hover{text-decoration:underline}
 
-        /* SCENARIOS */
+        /* Scenarios */
         .scenarios{display:grid;gap:16px}
         .scenario{
             background:#fafafa;
             border:2px dashed var(--border);
             border-radius:var(--radius);
             padding:14px;
+            min-height:140px;
+            transition:.15s;
         }
         .scenario.dragover{background:var(--primary-soft);border-color:var(--primary)}
-        .scenario-header{
-            display:flex;
-            justify-content:space-between;
-            margin-bottom:10px;
-        }
-        .scenario-title{font-weight:700}
+        .scenario-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:10px}
+        .scenario-name{font-weight:800}
+        .scenario-actions{display:flex;gap:6px;align-items:center}
+
         .items{display:grid;gap:8px}
         .item{
             background:#fff;
@@ -110,7 +118,41 @@
             display:flex;
             justify-content:space-between;
             align-items:center;
+            gap:10px;
         }
+        .item-title{font-weight:650; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+        .item-right{display:flex;gap:8px;align-items:center}
+
+        /* Modals */
+        .modal{
+            position:fixed; inset:0;
+            background:var(--overlay);
+            display:none;
+            align-items:center;
+            justify-content:center;
+            z-index:1000;
+            padding:16px;
+        }
+        .modal.show{display:flex}
+        .modal-content{
+            background:#fff;
+            border-radius:20px;
+            padding:20px;
+            width:100%;
+            max-width:560px;
+            box-shadow:0 40px 90px rgba(0,0,0,.28);
+            transform:translateY(0);
+        }
+        .modal-header{
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            margin-bottom:12px;
+            gap:10px;
+        }
+        .modal-title{font-weight:900;font-size:1.15rem}
+        .modal-footer{display:flex;justify-content:flex-end;gap:10px;margin-top:14px}
+        .muted{color:var(--muted);font-size:13px}
 
         @media(min-width:900px){
             body{padding:24px}
@@ -130,11 +172,12 @@
     <div class="panel">
         <h3>Prestations</h3>
 
-        <div class="form">
+        <div class="stack">
             <input id="pTitre" placeholder="Nom de la prestation"/>
             <textarea id="pDesc" placeholder="Description détaillée"></textarea>
             <input id="pPrix" placeholder="Prix (€)"/>
             <button class="btn-primary" onclick="createPrestation()">Ajouter la prestation</button>
+            <div class="muted">Astuce : fais glisser une prestation dans un scénario.</div>
         </div>
 
         <div class="cards" id="prestations"></div>
@@ -144,7 +187,7 @@
     <div class="panel">
         <h3>Scénarios</h3>
 
-        <div class="form">
+        <div class="stack">
             <input id="scenarioName" placeholder="Nom du scénario"/>
             <button class="btn-primary" onclick="createScenario()">Créer le scénario</button>
         </div>
@@ -154,15 +197,15 @@
                  th:each="s : ${scenarios}"
                  th:attr="data-scenario-id=${s.id}">
                 <div class="scenario-header">
-                    <div class="scenario-title"
+                    <div class="scenario-name"
                          th:text="${s.nom}"
                          th:attr="data-scenario-name=${s.id}">
                     </div>
-                    <div>
+                    <div class="scenario-actions">
                         <span class="price" th:attr="data-total-for=${s.id}">0 €</span>
-                        <button class="btn-icon" th:attr="onclick=|renameScenario(${s.id})|">✎</button>
-                        <button class="btn-icon btn-danger"
-                                th:attr="onclick=|deleteScenario(${s.id})|">🗑</button>
+                        <!-- si tes endpoints admin existent, on garde -->
+                        <button class="btn-icon" th:attr="onclick=|renameScenario(${s.id})|" title="Renommer">✎</button>
+                        <button class="btn-icon btn-danger" th:attr="onclick=|deleteScenario(${s.id})|" title="Supprimer">🗑</button>
                     </div>
                 </div>
                 <div class="items" th:attr="data-items-for=${s.id}"></div>
@@ -172,124 +215,316 @@
 
 </div>
 
-<script>
-    const escapeHtml=s=>String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
-    const parsePrice=v=>Number(String(v).replace(',','.'))||0;
+<!-- MODAL: Lecture description -->
+<div class="modal" id="descModal" aria-hidden="true">
+    <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="descTitle">
+        <div class="modal-header">
+            <div class="modal-title" id="descTitle"></div>
+            <button class="btn-icon" onclick="closeModal('descModal')" aria-label="Fermer">✕</button>
+        </div>
+        <div id="descBody" style="white-space:pre-line; color:#334155;"></div>
+    </div>
+</div>
 
-    /* PRESTATIONS */
+<!-- MODAL: Edit prestation -->
+<div class="modal" id="editModal" aria-hidden="true">
+    <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="editModalTitle">
+        <div class="modal-header">
+            <div class="modal-title" id="editModalTitle">Éditer la prestation</div>
+            <button class="btn-icon" onclick="closeModal('editModal')" aria-label="Fermer">✕</button>
+        </div>
+
+        <input type="hidden" id="editId"/>
+        <div class="stack">
+            <input id="editTitre" placeholder="Nom"/>
+            <textarea id="editDesc" placeholder="Description"></textarea>
+            <input id="editPrix" placeholder="Prix (€)"/>
+            <div class="muted">Les changements sont enregistrés dans la base via l’API.</div>
+        </div>
+
+        <div class="modal-footer">
+            <button onclick="closeModal('editModal')">Annuler</button>
+            <button class="btn-primary" onclick="saveEdit()">Enregistrer</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    /* ================= UTILS ================= */
+    const $ = (sel, root=document) => root.querySelector(sel);
+    const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
+    const parsePrice = v => Number(String(v ?? '').replace(',','.')) || 0;
+
+    function openModal(id){
+        const m = document.getElementById(id);
+        m.classList.add('show');
+        m.setAttribute('aria-hidden','false');
+    }
+    function closeModal(id){
+        const m = document.getElementById(id);
+        m.classList.remove('show');
+        m.setAttribute('aria-hidden','true');
+    }
+    // close on overlay click
+    $$('.modal').forEach(m=>{
+        m.addEventListener('click', (e)=>{
+            if(e.target === m) closeModal(m.id);
+        });
+    });
+    // close on ESC
+    document.addEventListener('keydown', (e)=>{
+        if(e.key === 'Escape'){
+            $$('.modal.show').forEach(m=>closeModal(m.id));
+        }
+    });
+
+    function showDesc(title, desc){
+        $('#descTitle').textContent = title || 'Description';
+        $('#descBody').textContent = (desc && desc.trim()) ? desc : 'Aucune description.';
+        openModal('descModal');
+    }
+
+    /* ================= PRESTATIONS ================= */
     async function loadPrestations(){
-        const r=await fetch('/api/admin/prestations');
-        const d=await r.json();
-        prestations.innerHTML='';
+        const r = await fetch('/api/admin/prestations');
+        const d = await r.json();
+
+        const list = $('#prestations');
+        list.innerHTML = '';
+
         d.forEach(p=>{
-            const c=document.createElement('div');
-            c.className='card';
-            c.draggable=true;
-            c.innerHTML=`
-      <div class="card-left">
-        <div class="card-title">${escapeHtml(p.titre)}</div>
-        <div class="card-desc">${escapeHtml(p.description||'')}</div>
-      </div>
-      <div style="display:flex;gap:8px;align-items:center">
-        <div class="price">${p.prix.toFixed(2)} €</div>
-        <button class="btn-icon btn-danger"
-                onclick="deletePrestation(${p.id})">🗑</button>
-      </div>`;
-            c.addEventListener('dragstart',e=>e.dataTransfer.setData('text/plain',p.id));
-            prestations.appendChild(c);
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.draggable = true;
+            card.dataset.prestationId = p.id;
+
+            const left = document.createElement('div');
+            left.className = 'card-left';
+
+            const title = document.createElement('div');
+            title.className = 'card-title';
+            title.textContent = p.titre ?? '';
+
+            const desc = document.createElement('div');
+            desc.className = 'card-desc';
+            desc.textContent = (p.description && p.description.trim())
+                ? p.description
+                : 'Lire la description';
+            desc.addEventListener('click', ()=> showDesc(p.titre, p.description));
+
+            left.appendChild(title);
+            left.appendChild(desc);
+
+            const right = document.createElement('div');
+            right.style.display = 'flex';
+            right.style.gap = '8px';
+            right.style.alignItems = 'center';
+
+            const price = document.createElement('div');
+            price.className = 'price';
+            price.textContent = `${Number(p.prix).toFixed(2)} €`;
+
+            const btnEdit = document.createElement('button');
+            btnEdit.className = 'btn-icon';
+            btnEdit.title = 'Éditer';
+            btnEdit.textContent = '✎';
+            btnEdit.addEventListener('click', ()=>{
+                openEdit(p);
+            });
+
+            const btnDel = document.createElement('button');
+            btnDel.className = 'btn-icon btn-danger';
+            btnDel.title = 'Supprimer';
+            btnDel.textContent = '🗑';
+            btnDel.addEventListener('click', async ()=>{
+                await deletePrestation(p.id);
+            });
+
+            right.appendChild(price);
+            right.appendChild(btnEdit);
+            right.appendChild(btnDel);
+
+            card.appendChild(left);
+            card.appendChild(right);
+
+            card.addEventListener('dragstart', (e)=>{
+                e.dataTransfer.setData('text/plain', String(p.id));
+            });
+
+            list.appendChild(card);
         });
     }
 
     async function createPrestation(){
-        await fetch('/api/admin/prestations',{
+        const titre = $('#pTitre').value.trim();
+        if(!titre) return;
+
+        await fetch('/api/admin/prestations', {
             method:'POST',
             headers:{'Content-Type':'application/json'},
-            body:JSON.stringify({
-                titre:pTitre.value,
-                description:pDesc.value,
-                prix:parsePrice(pPrix.value)
+            body: JSON.stringify({
+                titre,
+                description: $('#pDesc').value ?? '',
+                prix: parsePrice($('#pPrix').value)
             })
         });
-        pTitre.value='';pDesc.value='';pPrix.value='';
-        loadPrestations();
-        refreshAllScenarios();
+
+        $('#pTitre').value = '';
+        $('#pDesc').value = '';
+        $('#pPrix').value = '';
+
+        await loadPrestations();
+        await refreshAllScenarios();
     }
 
     async function deletePrestation(id){
-        await fetch(`/api/admin/prestations/${id}`,{method:'DELETE'});
-        loadPrestations();
-        refreshAllScenarios();
+        await fetch(`/api/admin/prestations/${id}`, { method:'DELETE' });
+        await loadPrestations();
+        await refreshAllScenarios();
     }
 
-    /* SCENARIOS */
-    function wireDnD(el){
-        el.addEventListener('dragover',e=>{e.preventDefault();el.classList.add('dragover')});
-        el.addEventListener('dragleave',()=>el.classList.remove('dragover'));
-        el.addEventListener('drop',async e=>{
-            e.preventDefault();el.classList.remove('dragover');
-            await fetch(`/api/scenarios/${el.dataset.scenarioId}/items?prestationId=${e.dataTransfer.getData('text/plain')}`,{method:'POST'});
-            refreshScenario(el.dataset.scenarioId);
+    function openEdit(p){
+        $('#editId').value = p.id;
+        $('#editTitre').value = p.titre ?? '';
+        $('#editDesc').value = p.description ?? '';
+        $('#editPrix').value = (p.prix ?? 0);
+        openModal('editModal');
+    }
+
+    async function saveEdit(){
+        const id = $('#editId').value;
+        await fetch(`/api/admin/prestations/${id}`, {
+            method:'PUT',
+            headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({
+                titre: $('#editTitre').value ?? '',
+                description: $('#editDesc').value ?? '',
+                prix: parsePrice($('#editPrix').value)
+            })
+        });
+
+        closeModal('editModal');
+
+        // important : reload depuis le serveur -> tu vois ce qui est réellement persisté
+        await loadPrestations();
+        await refreshAllScenarios();
+    }
+
+    /* ================= SCENARIOS (DnD + refresh) ================= */
+    function wireDnD(scenarioEl){
+        scenarioEl.addEventListener('dragover', e=>{
+            e.preventDefault();
+            scenarioEl.classList.add('dragover');
+        });
+        scenarioEl.addEventListener('dragleave', ()=>{
+            scenarioEl.classList.remove('dragover');
+        });
+        scenarioEl.addEventListener('drop', async (e)=>{
+            e.preventDefault();
+            scenarioEl.classList.remove('dragover');
+
+            const scenarioId = scenarioEl.dataset.scenarioId;
+            const prestationId = e.dataTransfer.getData('text/plain');
+            if(!scenarioId || !prestationId) return;
+
+            await fetch(`/api/scenarios/${scenarioId}/items?prestationId=${prestationId}`, { method:'POST' });
+            await refreshScenario(scenarioId);
         });
     }
 
     async function refreshScenario(id){
-        const r=await fetch(`/api/scenarios/${id}`);
-        const d=await r.json();
-        const items=document.querySelector(`[data-items-for="${id}"]`);
-        const total=document.querySelector(`[data-total-for="${id}"]`);
-        if(!items)return;
-        items.innerHTML='';
-        d.items.forEach(i=>{
-            items.innerHTML+=`
-      <div class="item">
-        <div>${escapeHtml(i.titre)}</div>
-        <div style="display:flex;gap:8px;align-items:center">
-          <span>${i.prix.toFixed(2)} €</span>
-          <button class="btn-icon btn-danger"
-                  onclick="removeItem(${id},${i.prestationId})">✕</button>
-        </div>
-      </div>`;
+        const r = await fetch(`/api/scenarios/${id}`);
+        const d = await r.json();
+
+        const items = $(`[data-items-for="${id}"]`);
+        const total = $(`[data-total-for="${id}"]`);
+        if(!items) return;
+
+        items.innerHTML = '';
+
+        (d.items || []).forEach(i=>{
+            const row = document.createElement('div');
+            row.className = 'item';
+
+            const left = document.createElement('div');
+            left.className = 'item-title';
+            left.textContent = i.titre ?? '';
+
+            const right = document.createElement('div');
+            right.className = 'item-right';
+
+            const price = document.createElement('span');
+            price.textContent = `${Number(i.prix).toFixed(2)} €`;
+
+            const btn = document.createElement('button');
+            btn.className = 'btn-icon btn-danger';
+            btn.title = 'Retirer du scénario';
+            btn.textContent = '✕';
+            btn.addEventListener('click', async ()=>{
+                await fetch(`/api/scenarios/${id}/items?prestationId=${i.prestationId}`, { method:'DELETE' });
+                await refreshScenario(id);
+            });
+
+            right.appendChild(price);
+            right.appendChild(btn);
+
+            row.appendChild(left);
+            row.appendChild(right);
+
+            items.appendChild(row);
         });
-        total.textContent=d.total.toFixed(2)+' €';
+
+        if(total) total.textContent = `${Number(d.total || 0).toFixed(2)} €`;
     }
 
-    async function removeItem(scenarioId,prestationId){
-        await fetch(`/api/scenarios/${scenarioId}/items?prestationId=${prestationId}`,{method:'DELETE'});
-        refreshScenario(scenarioId);
+    async function refreshAllScenarios(){
+        const scenarios = $$('.scenario');
+        for(const s of scenarios){
+            const id = s.dataset.scenarioId;
+            if(id) await refreshScenario(id);
+        }
     }
 
     async function createScenario(){
-        await fetch('/api/scenarios',{
+        const nom = $('#scenarioName').value.trim();
+        if(!nom) return;
+
+        await fetch('/api/scenarios', {
             method:'POST',
             headers:{'Content-Type':'application/json'},
-            body:JSON.stringify({nom:scenarioName.value})
+            body: JSON.stringify({ nom })
         });
+
         location.reload();
     }
 
+    // si tes endpoints admin existent (comme dans tes versions précédentes)
     async function renameScenario(id){
-        const el=document.querySelector(`[data-scenario-name="${id}"]`);
-        const newName=prompt("Nouveau nom du scénario",el.textContent);
-        if(!newName)return;
-        await fetch(`/api/admin/scenarios/${id}`,{
+        const el = $(`[data-scenario-name="${id}"]`);
+        const current = el ? el.textContent : '';
+        const n = prompt("Nouveau nom du scénario", current);
+        if(n == null || !n.trim()) return;
+
+        await fetch(`/api/admin/scenarios/${id}`, {
             method:'PUT',
             headers:{'Content-Type':'application/json'},
-            body:JSON.stringify({nom:newName})
+            body: JSON.stringify({ nom: n })
         });
-        el.textContent=newName;
+
+        if(el) el.textContent = n;
     }
 
     async function deleteScenario(id){
-        await fetch(`/api/admin/scenarios/${id}`,{method:'DELETE'});
-        document.querySelector(`.scenario[data-scenario-id="${id}"]`)?.remove();
+        await fetch(`/api/admin/scenarios/${id}`, { method:'DELETE' });
+        $(`.scenario[data-scenario-id="${id}"]`)?.remove();
     }
 
-    const refreshAllScenarios=()=>document.querySelectorAll('.scenario')
-        .forEach(s=>refreshScenario(s.dataset.scenarioId));
-
-    document.querySelectorAll('.scenario').forEach(wireDnD);
-    loadPrestations();
-    refreshAllScenarios();
+    /* ================= BOOT ================= */
+    (function boot(){
+        $$('.scenario').forEach(wireDnD);
+        loadPrestations();
+        refreshAllScenarios();
+    })();
 </script>
 
 </body>

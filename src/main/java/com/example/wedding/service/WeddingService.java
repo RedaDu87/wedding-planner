@@ -76,18 +76,28 @@ public class WeddingService {
     }
 
     @Transactional
-    public Prestation createPrestation(String titre, BigDecimal prix) {
-        return prestationRepo.save(Prestation.builder().titre(titre).prix(prix).build());
+    public Prestation createPrestation(String titre, String description, BigDecimal prix) {
+        return prestationRepo.save(
+                Prestation.builder()
+                        .titre(titre)
+                        .description(description)
+                        .prix(prix)
+                        .build()
+        );
     }
 
     @Transactional
-    public Prestation updatePrestation(Long id, String titre, BigDecimal prix) {
+    public Prestation updatePrestation(Long id, String titre, String description, BigDecimal prix) {
         Prestation p = prestationRepo.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Prestation introuvable"));
+
         p.setTitre(titre);
+        p.setDescription(description);
         p.setPrix(prix);
+
         return prestationRepo.save(p);
     }
+
 
     @Transactional
     public Scenario updateScenario(Long id, String nom) {
