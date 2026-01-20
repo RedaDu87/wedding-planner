@@ -1,9 +1,9 @@
 version: "3.9"
 
 services:
+
   postgres:
     image: postgres:16
-    container_name: wedding_postgres
     restart: always
     environment:
       POSTGRES_DB: wedding_planner
@@ -11,21 +11,41 @@ services:
       POSTGRES_PASSWORD: secret
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
+    networks:
+      - backend
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
 
   app:
-    build: .
-    container_name: wedding_app
+    image: wedding-planner-app:latest
     restart: always
-    depends_on:
-      - postgres
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/wedding_planner
       SPRING_DATASOURCE_USERNAME: wedding_user
       SPRING_DATASOURCE_PASSWORD: secret
-    ports:
-      - "8080:8080"
+    networks:
+      - backend
+      - traefik-net
+    deploy:
+      replicas: 2
+      restart_policy:
+        condition: any
+      labels:
+        - "traefik.enable=true"
+        - "traefik.docker.network=traefik-net"
+        - "traefik.http.routers.wedding.rule=Host(`wedding.hamsterdeal.ch`)"
+        - "traefik.http.routers.wedding.entrypoints=websecure"
+        - "traefik.http.routers.wedding.tls=true"
+        - "traefik.http.services.wedding.loadbalancer.server.port=8080"
 
 volumes:
   postgres_data:
+
+networks:
+  backend:
+    driver: overlay
+  traefik-net:
+    external: true
