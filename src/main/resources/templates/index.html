@@ -390,7 +390,11 @@
                         <span class="price" th:attr="data-total-for=${s.id}">0 €</span>
 
                         <!-- on garde exactement tes endpoints existants -->
-                        <button type="button" class="btn-icon" th:attr="onclick=|renameScenario(${s.id})|" title="Renommer" data-i18n-title="scenarios.renameTitle">✎</button>
+                        <button type="button" class="btn-icon"
+                                th:attr="onclick=|openScenarioEdit(${s.id})|"
+                                data-i18n-title="scenarios.renameTitle">
+                            ✎
+                        </button>
                         <button type="button" class="btn-icon btn-danger" th:attr="onclick=|deleteScenario(${s.id})|" title="Supprimer" data-i18n-title="scenarios.deleteTitle">🗑</button>
                     </div>
                 </div>
@@ -438,6 +442,42 @@
         </div>
     </div>
 </div>
+<!-- MODAL: Edit scénario -->
+<div class="modal" id="editScenarioModal" aria-hidden="true">
+    <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="editScenarioTitle">
+        <div class="modal-header">
+            <div class="modal-title" id="editScenarioTitle" data-i18n="scenarioEdit.title">
+                Éditer le scénario
+            </div>
+            <button type="button" class="btn-icon"
+                    onclick="closeModal('editScenarioModal')" aria-label="Close">✕</button>
+        </div>
+
+        <input type="hidden" id="editScenarioId"/>
+
+        <div class="stack">
+            <input id="editScenarioName"
+                   data-i18n-placeholder="scenarioEdit.namePh"
+                   placeholder="Nom du scénario"/>
+            <div class="muted" data-i18n="scenarioEdit.hint">
+                Le nom sera mis à jour immédiatement.
+            </div>
+        </div>
+
+        <div class="modal-footer">
+            <button type="button" class="btn-ghost"
+                    onclick="closeModal('editScenarioModal')"
+                    data-i18n="modal.cancel">
+                Annuler
+            </button>
+            <button type="button" class="btn-primary"
+                    onclick="saveScenarioEdit()"
+                    data-i18n="modal.save">
+                Enregistrer
+            </button>
+        </div>
+    </div>
+</div>
 
 <script>
     /* ================= I18N ================= */
@@ -467,6 +507,11 @@
                 renameTitle: "Renommer",
                 deleteTitle: "Supprimer",
                 removeItemTitle: "Retirer du scénario"
+            },
+            scenarioEdit: {
+                title: "Éditer le scénario",
+                namePh: "Nom du scénario",
+                hint: "Le nom sera mis à jour immédiatement."
             },
             modal: {
                 close: "Fermer",
@@ -507,6 +552,11 @@
                 deleteTitle: "حذف",
                 removeItemTitle: "إزالة من السيناريو"
             },
+            scenarioEdit: {
+                title: "تعديل السيناريو",
+                namePh: "اسم السيناريو",
+                hint: "سيتم تحديث الاسم فورًا."
+            },
             modal: {
                 close: "إغلاق",
                 cancel: "إلغاء",
@@ -545,6 +595,11 @@
                 renameTitle: "Renombrar",
                 deleteTitle: "Eliminar",
                 removeItemTitle: "Quitar del escenario"
+            },
+            scenarioEdit: {
+                title: "Editar escenario",
+                namePh: "Nombre del escenario",
+                hint: "El nombre se actualizará inmediatamente."
             },
             modal: {
                 close: "Cerrar",
@@ -711,6 +766,37 @@
             list.appendChild(card);
         });
     }
+
+    /* ================= SCENARIO EDIT MODAL ================= */
+
+    function openScenarioEdit(id){
+        const nameEl = document.querySelector(`[data-scenario-name="${id}"]`);
+        if(!nameEl) return;
+
+        document.getElementById("editScenarioId").value = id;
+        document.getElementById("editScenarioName").value = nameEl.textContent.trim();
+
+        openModal("editScenarioModal");
+    }
+
+    async function saveScenarioEdit(){
+        const id = document.getElementById("editScenarioId").value;
+        const name = document.getElementById("editScenarioName").value.trim();
+        if(!id || !name) return;
+
+        await fetch(`/api/admin/scenarios/${id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ nom: name })
+        });
+
+        // mise à jour immédiate dans l’UI
+        const nameEl = document.querySelector(`[data-scenario-name="${id}"]`);
+        if(nameEl) nameEl.textContent = name;
+
+        closeModal("editScenarioModal");
+    }
+
 
     async function createPrestation(){
         const titre = $('#pTitre').value.trim();
