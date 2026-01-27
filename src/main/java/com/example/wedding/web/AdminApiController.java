@@ -3,6 +3,8 @@ package com.example.wedding.web;
 import com.example.wedding.domain.Prestation;
 import com.example.wedding.domain.Scenario;
 import com.example.wedding.service.WeddingService;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,8 +20,16 @@ public class AdminApiController {
 
     // ---- Prestations CRUD ----
     public record PrestationReq(
+            @NotBlank(message = "Le titre est obligatoire")
+            @Size(max = 255, message = "Le titre ne doit pas dépasser 255 caractères")
             String titre,
+            
+            @Size(max = 2000, message = "La description ne doit pas dépasser 2000 caractères")
             String description,
+            
+            @NotNull(message = "Le prix est obligatoire")
+            @DecimalMin(value = "0.01", message = "Le prix doit être supérieur à 0")
+            @Digits(integer = 10, fraction = 2, message = "Le prix doit avoir au maximum 10 chiffres entiers et 2 décimales")
             BigDecimal prix
     ) {}
 
@@ -43,7 +53,7 @@ public class AdminApiController {
     }
 
     @PostMapping("/prestations")
-    public PrestationDto createPrestation(@RequestBody PrestationReq req) {
+    public PrestationDto createPrestation(@Valid @RequestBody PrestationReq req) {
         Prestation p = service.createPrestation(
                 req.titre(),
                 req.description(),
@@ -60,7 +70,7 @@ public class AdminApiController {
     @PutMapping("/prestations/{id}")
     public PrestationDto updatePrestation(
             @PathVariable Long id,
-            @RequestBody PrestationReq req
+            @Valid @RequestBody PrestationReq req
     ) {
         Prestation p = service.updatePrestation(
                 id,
@@ -82,7 +92,11 @@ public class AdminApiController {
     }
 
     // ---- Scénarios ----
-    public record ScenarioReq(String nom) {}
+    public record ScenarioReq(
+            @NotBlank(message = "Le nom du scénario est obligatoire")
+            @Size(max = 255, message = "Le nom ne doit pas dépasser 255 caractères")
+            String nom
+    ) {}
     public record ScenarioDto(Long id, String nom) {}
 
     @DeleteMapping("/scenarios/{id}")
@@ -91,7 +105,7 @@ public class AdminApiController {
     }
 
     @PutMapping("/scenarios/{id}")
-    public ScenarioDto renameScenario(@PathVariable Long id, @RequestBody ScenarioReq req) {
+    public ScenarioDto renameScenario(@PathVariable Long id, @Valid @RequestBody ScenarioReq req) {
         Scenario s = service.updateScenario(id, req.nom());
         return new ScenarioDto(s.getId(), s.getNom());
     }
