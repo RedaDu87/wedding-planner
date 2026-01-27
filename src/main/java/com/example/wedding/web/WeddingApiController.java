@@ -3,6 +3,9 @@ package com.example.wedding.web;
 import com.example.wedding.domain.Scenario;
 import com.example.wedding.domain.ScenarioItem;
 import com.example.wedding.service.WeddingService;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,12 +19,16 @@ public class WeddingApiController {
 
     private final WeddingService service;
 
-    public record CreateScenarioRequest(String nom) {}
+    public record CreateScenarioRequest(
+            @NotBlank(message = "Le nom du scénario est obligatoire")
+            @Size(max = 255, message = "Le nom ne doit pas dépasser 255 caractères")
+            String nom
+    ) {}
     public record ScenarioView(Long scenarioId, List<ScenarioItemDto> items, BigDecimal total) {}
     public record ScenarioItemDto(Long prestationId, String titre, BigDecimal prix) {}
 
     @PostMapping("/scenarios")
-    public Scenario createScenario(@RequestBody CreateScenarioRequest req) {
+    public Scenario createScenario(@Valid @RequestBody CreateScenarioRequest req) {
         return service.createScenario(req.nom());
     }
 

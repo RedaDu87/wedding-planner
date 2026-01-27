@@ -42,6 +42,11 @@ public class WeddingService {
 
     @Transactional
     public void addPrestationToScenario(Long scenarioId, Long prestationId) {
+        // Check if the prestation is already in this scenario
+        if (itemRepo.existsByScenarioIdAndPrestationId(scenarioId, prestationId)) {
+            throw new IllegalArgumentException("Cette prestation est déjà présente dans ce scénario");
+        }
+        
         Scenario scenario = scenarioRepo.findById(scenarioId)
                 .orElseThrow(() -> new IllegalArgumentException("Scenario introuvable"));
         Prestation prestation = prestationRepo.findById(prestationId)
@@ -67,11 +72,8 @@ public class WeddingService {
 
     @Transactional
     public void deletePrestation(Long prestationId) {
-        // supprime aussi les items qui pointent vers la prestation
-        itemRepo.findAll().stream()
-                .filter(i -> i.getPrestation().getId().equals(prestationId))
-                .forEach(itemRepo::delete);
-
+        // Use optimized query to delete all items pointing to this prestation
+        itemRepo.deleteByPrestationId(prestationId);
         prestationRepo.deleteById(prestationId);
     }
 
