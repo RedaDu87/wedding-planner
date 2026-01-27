@@ -327,6 +327,44 @@
             .grid{grid-template-columns:420px 1fr}
             .scenarios{grid-template-columns:repeat(auto-fit,minmax(320px,1fr))}
         }
+
+        /* Toast notifications */
+        .toast-container{
+            position:fixed;
+            top:20px;
+            right:20px;
+            z-index:2000;
+            display:flex;
+            flex-direction:column;
+            gap:10px;
+            pointer-events:none;
+        }
+        .toast{
+            background:#fff;
+            border-radius:12px;
+            padding:14px 18px;
+            box-shadow:0 8px 30px rgba(2,6,23,.15);
+            min-width:250px;
+            max-width:400px;
+            display:flex;
+            align-items:center;
+            gap:10px;
+            pointer-events:auto;
+            animation:slideIn .3s ease;
+            border-left:4px solid var(--primary);
+        }
+        .toast.success{border-left-color:var(--success)}
+        .toast.error{border-left-color:var(--danger)}
+        .toast-message{flex:1;font-size:.9rem;color:var(--text)}
+        @keyframes slideIn{
+            from{transform:translateX(400px);opacity:0}
+            to{transform:translateX(0);opacity:1}
+        }
+        @keyframes slideOut{
+            from{transform:translateX(0);opacity:1}
+            to{transform:translateX(400px);opacity:0}
+        }
+        .toast.hiding{animation:slideOut .3s ease}
     </style>
 </head>
 
@@ -525,6 +563,20 @@
                 pricePh: "Prix (€)",
                 hint: "Les changements sont enregistrés via l’API."
             }
+,
+            confirm: {
+                deletePrestation: "Êtes-vous sûr de vouloir supprimer cette prestation ? Elle sera retirée de tous les scénarios.",
+                deleteScenario: "Êtes-vous sûr de vouloir supprimer ce scénario ?"
+            },
+            notifications: {
+                error: "Une erreur est survenue",
+                prestationCreated: "Prestation créée",
+                prestationUpdated: "Prestation mise à jour",
+                prestationDeleted: "Prestation supprimée",
+                scenarioCreated: "Scénario créé",
+                scenarioUpdated: "Scénario mis à jour",
+                scenarioDeleted: "Scénario supprimé"
+            }
         },
         ar: {
             dir: "rtl",
@@ -568,6 +620,20 @@
                 descPh: "الوصف",
                 pricePh: "السعر (€)",
                 hint: "يتم حفظ التغييرات عبر الـ API."
+            }
+,
+            confirm: {
+                deletePrestation: "هل أنت متأكد من حذف هذه الخدمة؟ سيتم إزالتها من جميع السيناريوهات.",
+                deleteScenario: "هل أنت متأكد من حذف هذا السيناريو؟"
+            },
+            notifications: {
+                error: "حدث خطأ",
+                prestationCreated: "تم إنشاء الخدمة",
+                prestationUpdated: "تم تحديث الخدمة",
+                prestationDeleted: "تم حذف الخدمة",
+                scenarioCreated: "تم إنشاء السيناريو",
+                scenarioUpdated: "تم تحديث السيناريو",
+                scenarioDeleted: "تم حذف السيناريو"
             }
         },
         es: {
@@ -613,6 +679,20 @@
                 pricePh: "Precio (€)",
                 hint: "Los cambios se guardan vía API."
             }
+,
+            confirm: {
+                deletePrestation: "¿Estás seguro de que quieres eliminar este servicio? Se eliminará de todos los escenarios.",
+                deleteScenario: "¿Estás seguro de que quieres eliminar este escenario?"
+            },
+            notifications: {
+                error: "Ha ocurrido un error",
+                prestationCreated: "Servicio creado",
+                prestationUpdated: "Servicio actualizado",
+                prestationDeleted: "Servicio eliminado",
+                scenarioCreated: "Escenario creado",
+                scenarioUpdated: "Escenario actualizado",
+                scenarioDeleted: "Escenario eliminado"
+            }
         }
     };
 
@@ -623,6 +703,32 @@
         let cur = dict;
         for(const p of parts) cur = cur?.[p];
         return (cur ?? key);
+    }
+
+    /* ================= TOAST NOTIFICATIONS ================= */
+    function showToast(message, type = 'success'){
+        let container = document.getElementById('toast-container');
+        if(!container){
+            container = document.createElement('div');
+            container.id = 'toast-container';
+            container.className = 'toast-container';
+            document.body.appendChild(container);
+        }
+
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        
+        const messageEl = document.createElement('div');
+        messageEl.className = 'toast-message';
+        messageEl.textContent = message;
+        toast.appendChild(messageEl);
+
+        container.appendChild(toast);
+
+        setTimeout(()=>{
+            toast.classList.add('hiding');
+            setTimeout(()=> toast.remove(), 300);
+        }, 3000);
     }
 
     function applyI18n(){
@@ -784,17 +890,28 @@
         const name = document.getElementById("editScenarioName").value.trim();
         if(!id || !name) return;
 
-        await fetch(`/api/admin/scenarios/${id}`, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ nom: name })
-        });
+        try {
+            const response = await fetch(`/api/admin/scenarios/${id}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ nom: name })
+            });
 
-        // mise à jour immédiate dans l’UI
-        const nameEl = document.querySelector(`[data-scenario-name="${id}"]`);
-        if(nameEl) nameEl.textContent = name;
+            if(!response.ok) {
+                const error = await response.json();
+                showToast(error.message || t("notifications.error"), 'error');
+                return;
+            }
 
-        closeModal("editScenarioModal");
+            // mise à jour immédiate dans l'UI
+            const nameEl = document.querySelector(`[data-scenario-name="${id}"]`);
+            if(nameEl) nameEl.textContent = name;
+
+            closeModal("editScenarioModal");
+            showToast(t("notifications.scenarioUpdated"), 'success');
+        } catch(err) {
+            showToast(t("notifications.error"), 'error');
+        }
     }
 
 
@@ -802,28 +919,53 @@
         const titre = $('#pTitre').value.trim();
         if(!titre) return;
 
-        await fetch('/api/admin/prestations', {
-            method:'POST',
-            headers:{'Content-Type':'application/json'},
-            body: JSON.stringify({
-                titre,
-                description: $('#pDesc').value ?? '',
-                prix: parsePrice($('#pPrix').value)
-            })
-        });
+        try {
+            const response = await fetch('/api/admin/prestations', {
+                method:'POST',
+                headers:{'Content-Type':'application/json'},
+                body: JSON.stringify({
+                    titre,
+                    description: $('#pDesc').value ?? '',
+                    prix: parsePrice($('#pPrix').value)
+                })
+            });
 
-        $('#pTitre').value = '';
-        $('#pDesc').value = '';
-        $('#pPrix').value = '';
+            if(!response.ok) {
+                const error = await response.json();
+                showToast(error.message || t("notifications.error"), 'error');
+                return;
+            }
 
-        await loadPrestations();
-        await refreshAllScenarios();
+            $('#pTitre').value = '';
+            $('#pDesc').value = '';
+            $('#pPrix').value = '';
+
+            await loadPrestations();
+            await refreshAllScenarios();
+            showToast(t("notifications.prestationCreated"), 'success');
+        } catch(err) {
+            showToast(t("notifications.error"), 'error');
+        }
     }
 
     async function deletePrestation(id){
-        await fetch(`/api/admin/prestations/${id}`, { method:'DELETE' });
-        await loadPrestations();
-        await refreshAllScenarios();
+        if(!window.confirm(t("confirm.deletePrestation"))) return;
+
+        try {
+            const response = await fetch(`/api/admin/prestations/${id}`, { method:'DELETE' });
+
+            if(!response.ok) {
+                const error = await response.json();
+                showToast(error.message || t("notifications.error"), 'error');
+                return;
+            }
+
+            await loadPrestations();
+            await refreshAllScenarios();
+            showToast(t("notifications.prestationDeleted"), 'success');
+        } catch(err) {
+            showToast(t("notifications.error"), 'error');
+        }
     }
 
     function openEdit(p){
@@ -838,21 +980,33 @@
 
     async function saveEdit(){
         const id = $('#editId').value;
-        await fetch(`/api/admin/prestations/${id}`, {
-            method:'PUT',
-            headers:{'Content-Type':'application/json'},
-            body: JSON.stringify({
-                titre: $('#editTitre').value ?? '',
-                description: $('#editDesc').value ?? '',
-                prix: parsePrice($('#editPrix').value)
-            })
-        });
 
-        closeModal('editModal');
+        try {
+            const response = await fetch(`/api/admin/prestations/${id}`, {
+                method:'PUT',
+                headers:{'Content-Type':'application/json'},
+                body: JSON.stringify({
+                    titre: $('#editTitre').value ?? '',
+                    description: $('#editDesc').value ?? '',
+                    prix: parsePrice($('#editPrix').value)
+                })
+            });
 
-        // reload from server = ensures persistence is visible
-        await loadPrestations();
-        await refreshAllScenarios();
+            if(!response.ok) {
+                const error = await response.json();
+                showToast(error.message || t("notifications.error"), 'error');
+                return;
+            }
+
+            closeModal('editModal');
+
+            // reload from server = ensures persistence is visible
+            await loadPrestations();
+            await refreshAllScenarios();
+            showToast(t("notifications.prestationUpdated"), 'success');
+        } catch(err) {
+            showToast(t("notifications.error"), 'error');
+        }
     }
 
     /* ================= SCENARIOS (DnD + refresh) ================= */
@@ -872,8 +1026,19 @@
             const prestationId = e.dataTransfer.getData('text/plain');
             if(!scenarioId || !prestationId) return;
 
-            await fetch(`/api/scenarios/${scenarioId}/items?prestationId=${prestationId}`, { method:'POST' });
-            await refreshScenario(scenarioId);
+            try {
+                const response = await fetch(`/api/scenarios/${scenarioId}/items?prestationId=${prestationId}`, { method:'POST' });
+
+                if(!response.ok) {
+                    const error = await response.json();
+                    showToast(error.message || t("notifications.error"), 'error');
+                    return;
+                }
+
+                await refreshScenario(scenarioId);
+            } catch(err) {
+                showToast(t("notifications.error"), 'error');
+            }
         });
     }
 
@@ -907,8 +1072,19 @@
             btn.title = t("scenarios.removeItemTitle");
             btn.textContent = '✕';
             btn.addEventListener('click', async ()=>{
-                await fetch(`/api/scenarios/${id}/items?prestationId=${i.prestationId}`, { method:'DELETE' });
-                await refreshScenario(id);
+                try {
+                    const response = await fetch(`/api/scenarios/${id}/items?prestationId=${i.prestationId}`, { method:'DELETE' });
+
+                    if(!response.ok) {
+                        const error = await response.json();
+                        showToast(error.message || t("notifications.error"), 'error');
+                        return;
+                    }
+
+                    await refreshScenario(id);
+                } catch(err) {
+                    showToast(t("notifications.error"), 'error');
+                }
             });
 
             right.appendChild(price);
@@ -935,13 +1111,24 @@
         const nom = $('#scenarioName').value.trim();
         if(!nom) return;
 
-        await fetch('/api/scenarios', {
-            method:'POST',
-            headers:{'Content-Type':'application/json'},
-            body: JSON.stringify({ nom })
-        });
+        try {
+            const response = await fetch('/api/scenarios', {
+                method:'POST',
+                headers:{'Content-Type':'application/json'},
+                body: JSON.stringify({ nom })
+            });
 
-        location.reload();
+            if(!response.ok) {
+                const error = await response.json();
+                showToast(error.message || t("notifications.error"), 'error');
+                return;
+            }
+
+            showToast(t("notifications.scenarioCreated"), 'success');
+            location.reload();
+        } catch(err) {
+            showToast(t("notifications.error"), 'error');
+        }
     }
 
     // endpoints admin (comme dans ton fichier stable)
@@ -961,8 +1148,22 @@
     }
 
     async function deleteScenario(id){
-        await fetch(`/api/admin/scenarios/${id}`, { method:'DELETE' });
-        $(`.scenario[data-scenario-id="${id}"]`)?.remove();
+        if(!window.confirm(t("confirm.deleteScenario"))) return;
+
+        try {
+            const response = await fetch(`/api/admin/scenarios/${id}`, { method:'DELETE' });
+
+            if(!response.ok) {
+                const error = await response.json();
+                showToast(error.message || t("notifications.error"), 'error');
+                return;
+            }
+
+            $(`.scenario[data-scenario-id="${id}"]`)?.remove();
+            showToast(t("notifications.scenarioDeleted"), 'success');
+        } catch(err) {
+            showToast(t("notifications.error"), 'error');
+        }
     }
 
     /* ================= BOOT ================= */
