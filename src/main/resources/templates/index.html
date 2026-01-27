@@ -562,8 +562,7 @@
                 descPh: "Description",
                 pricePh: "Prix (€)",
                 hint: "Les changements sont enregistrés via l’API."
-            }
-,
+            },
             confirm: {
                 deletePrestation: "Êtes-vous sûr de vouloir supprimer cette prestation ? Elle sera retirée de tous les scénarios.",
                 deleteScenario: "Êtes-vous sûr de vouloir supprimer ce scénario ?"
@@ -620,8 +619,7 @@
                 descPh: "الوصف",
                 pricePh: "السعر (€)",
                 hint: "يتم حفظ التغييرات عبر الـ API."
-            }
-,
+            },
             confirm: {
                 deletePrestation: "هل أنت متأكد من حذف هذه الخدمة؟ سيتم إزالتها من جميع السيناريوهات.",
                 deleteScenario: "هل أنت متأكد من حذف هذا السيناريو؟"
@@ -678,8 +676,7 @@
                 descPh: "Descripción",
                 pricePh: "Precio (€)",
                 hint: "Los cambios se guardan vía API."
-            }
-,
+            },
             confirm: {
                 deletePrestation: "¿Estás seguro de que quieres eliminar este servicio? Se eliminará de todos los escenarios.",
                 deleteScenario: "¿Estás seguro de que quieres eliminar este escenario?"
@@ -729,6 +726,19 @@
             toast.classList.add('hiding');
             setTimeout(()=> toast.remove(), 300);
         }, 3000);
+    }
+
+    async function handleErrorResponse(response){
+        try {
+            const contentType = response.headers.get('content-type');
+            if(contentType && contentType.includes('application/json')){
+                const error = await response.json();
+                return error.message || t("notifications.error");
+            }
+        } catch(e) {
+            // Failed to parse JSON, fall through
+        }
+        return t("notifications.error");
     }
 
     function applyI18n(){
@@ -898,8 +908,7 @@
             });
 
             if(!response.ok) {
-                const error = await response.json();
-                showToast(error.message || t("notifications.error"), 'error');
+                showToast(await handleErrorResponse(response), 'error');
                 return;
             }
 
@@ -931,8 +940,7 @@
             });
 
             if(!response.ok) {
-                const error = await response.json();
-                showToast(error.message || t("notifications.error"), 'error');
+                showToast(await handleErrorResponse(response), 'error');
                 return;
             }
 
@@ -955,8 +963,7 @@
             const response = await fetch(`/api/admin/prestations/${id}`, { method:'DELETE' });
 
             if(!response.ok) {
-                const error = await response.json();
-                showToast(error.message || t("notifications.error"), 'error');
+                showToast(await handleErrorResponse(response), 'error');
                 return;
             }
 
@@ -993,8 +1000,7 @@
             });
 
             if(!response.ok) {
-                const error = await response.json();
-                showToast(error.message || t("notifications.error"), 'error');
+                showToast(await handleErrorResponse(response), 'error');
                 return;
             }
 
@@ -1030,8 +1036,7 @@
                 const response = await fetch(`/api/scenarios/${scenarioId}/items?prestationId=${prestationId}`, { method:'POST' });
 
                 if(!response.ok) {
-                    const error = await response.json();
-                    showToast(error.message || t("notifications.error"), 'error');
+                    showToast(await handleErrorResponse(response), 'error');
                     return;
                 }
 
@@ -1076,8 +1081,7 @@
                     const response = await fetch(`/api/scenarios/${id}/items?prestationId=${i.prestationId}`, { method:'DELETE' });
 
                     if(!response.ok) {
-                        const error = await response.json();
-                        showToast(error.message || t("notifications.error"), 'error');
+                        showToast(await handleErrorResponse(response), 'error');
                         return;
                     }
 
@@ -1119,8 +1123,7 @@
             });
 
             if(!response.ok) {
-                const error = await response.json();
-                showToast(error.message || t("notifications.error"), 'error');
+                showToast(await handleErrorResponse(response), 'error');
                 return;
             }
 
@@ -1154,8 +1157,7 @@
             const response = await fetch(`/api/admin/scenarios/${id}`, { method:'DELETE' });
 
             if(!response.ok) {
-                const error = await response.json();
-                showToast(error.message || t("notifications.error"), 'error');
+                showToast(await handleErrorResponse(response), 'error');
                 return;
             }
 
